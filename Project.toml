@@ -1,0 +1,9 @@
+name = "Summerschool21Exercises"
+uuid = "d09bc8c6-c9f9-4489-b964-52dc24283d5c"
+authors = ["ThomasBreuer <sam@math.rwth-aachen.de>"]
+version = "0.1.0"
+
+[deps]
+Oscar = "f1435218-dba5-11e9-1e4d-f1a5fab5fc13"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
