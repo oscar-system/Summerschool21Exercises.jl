@@ -23,6 +23,10 @@
   @test normalform(coll, [(3, 1), (1, 1)]) == [(1, 1), (2, 1), (3, 1)]
 end
 
+@testset "inv" begin
+  @test inv(SyllableVector{Int}([1,2,-1])) == SyllableVector{Int}([(3,1),(2,-2),(1,-1)])
+end
+
 @testset "collection for random elements in small pc groups" begin
   @test test_collection(Int64, small_group(16, 5))
   @test test_collection(Int32, small_group(32, 8))

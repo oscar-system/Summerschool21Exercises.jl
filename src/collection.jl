@@ -3,11 +3,12 @@
 # This file provides a straightforward implementation of collection
 # in pc groups, as a starting point for your own experiments.
 
+import Base: inv # needed for `SyllableVector`
+
 export Collector,
        collector_from_pc_presentation,
        findfirst_uncollected_leftmost,
-       freely_reduced_SyllableVector,
-       inv_SyllableVector,
+       freely_reduced,
        normalform,
        OscarInteger,
        Syllable,
@@ -79,12 +80,12 @@ end
 # functions for `SyllableVector{T}`
 
 """
-    freely_reduced_SyllableVector(v::SyllableVector{T}) where T <: OscarInteger
+    freely_reduced(v::SyllableVector{T}) where T <: OscarInteger
 
 Return a `SyllableVector{T}` that encodes the same group element as `v`
 such that adjacent syllables belong to different generators.
 """
-function freely_reduced_SyllableVector(v::SyllableVector{T}) where T <: OscarInteger
+function freely_reduced(v::SyllableVector{T}) where T <: OscarInteger
     w = Syllable{T}[]
     length(v) == 0 && return w
     if v[1][2] != 0
@@ -104,11 +105,11 @@ function freely_reduced_SyllableVector(v::SyllableVector{T}) where T <: OscarInt
 end
 
 """
-    inv_SyllableVector(v::SyllableVector{T}) where T <: OscarInteger
+    inv(v::SyllableVector{T}) where T <: OscarInteger
 
 Return a `SyllableVector{T}` that encodes the inverse of `v`.
 """
-function inv_SyllableVector(v::SyllableVector{T}) where T <: OscarInteger
+function inv(v::SyllableVector{T}) where T <: OscarInteger
     w = Syllable{T}[]
     for i in length(v):-1:1
       push!(w, (v[i][1], -v[i][2]))
@@ -157,7 +158,7 @@ Return a `SyllableVector{T}` that is the normal form of `v`,
 w.r.t. collection given by the rules in `coll`.
 """
 function normalform(coll::Collector{T}, v::SyllableVector{T}) where T <: OscarInteger
-    v = freely_reduced_SyllableVector(v)
+    v = freely_reduced(v)
     i = coll.findfirst_uncollected(coll, v)
     while i > 0
       w = v[1:i-1]
@@ -178,7 +179,7 @@ function normalform(coll::Collector{T}, v::SyllableVector{T}) where T <: OscarIn
         end
         rule = coll.rules[ii, ii]
         if b < 0
-          rule = inv_SyllableVector(rule)
+          rule = inv(rule)
           b = -b
         end
         for j in 1:b
@@ -204,7 +205,7 @@ function normalform(coll::Collector{T}, v::SyllableVector{T}) where T <: OscarIn
           push!(w, (y, -1))
         end
         if a < 0
-          rule = inv_SyllableVector(rule)
+          rule = inv(rule)
           a = -a
         end
         for j in 1:a
@@ -215,7 +216,7 @@ function normalform(coll::Collector{T}, v::SyllableVector{T}) where T <: OscarIn
         end
         append!(w, v[(i+2):end])
       end
-      v = freely_reduced_SyllableVector(w)
+      v = freely_reduced(w)
       i = coll.findfirst_uncollected(coll, v)
     end
     return v
@@ -230,7 +231,7 @@ or this syllable together with the first letter of the `i+1`-st syllable
 is a minimal uncollected subword.
 If `v` is collected then `0` is returned.
 
-`v` is assumed to be freely reduced, see [`freely_reduced_SyllableVector`](@ref).
+`v` is assumed to be freely reduced, see [`freely_reduced`](@ref).
 """
 function findfirst_uncollected_leftmost(coll::Collector{T}, v::SyllableVector{T}) where T <: OscarInteger
     for i in 1:length(v)
@@ -252,14 +253,14 @@ end
 
 
 """
-    collector_from_pc_presentation(G::Oscar.GAPGroup, findfirst::Function, ::Type{T} = Int) where T <: OscarInteger
+    collector_from_pc_presentation(G::Oscar.GAPGroup, findfirst::Function = findfirst_uncollected_leftmost, ::Type{T} = Int) where T <: OscarInteger
 
 Return a `Collector{T}` for the pc group `G`, such that `findfirst` is used
 to find the first uncollected subword in a word.
 
 (The data are just computed in GAP from the group `G.X`.)
 """
-function collector_from_pc_presentation(G::Oscar.GAPGroup, findfirst::Function, ::Type{T} = Int) where T <: OscarInteger
+function collector_from_pc_presentation(G::Oscar.GAPGroup, findfirst::Function = findfirst_uncollected_leftmost, ::Type{T} = Int) where T <: OscarInteger
     @assert issolvable(G) "the group is not solvable"
     pcgs = GAP.Globals.Pcgs(G.X)
     n = length(pcgs)
@@ -280,18 +281,21 @@ function collector_from_pc_presentation(G::Oscar.GAPGroup, findfirst::Function, 
     return Collector{T}(findfirst, powers, rules)
 end
 
+# for convenience: enter a type but not a function
+collector_from_pc_presentation(G::Oscar.GAPGroup, ::Type{T}) where T <: OscarInteger = collector_from_pc_presentation(G, findfirst_uncollected_leftmost, T)
+
 
 """
     test_collection(::Type{T}, G::Oscar.GAPGroup) where T <: OscarInteger
 
-Run 100 tests for collection with the collector for `G` that is computed
+Run 100 tests for collection with a collector for `G` that is computed
 by [`collector_from_pc_presentation`](@ref), comparing the collection result
 for the concatenation of two random words with the product of the two
 elements (computed by GAP in `G.X`),
 and return `true` if the results coincide, and `false` otherwise.
 """
 function test_collection(::Type{T}, G::Oscar.GAPGroup) where T <: OscarInteger
-    coll = collector_from_pc_presentation(G, findfirst_uncollected_leftmost, T)
+    coll = collector_from_pc_presentation(G, T)
 
     for i in 1:100
       g1 = GAP.Globals.Random(G.X)
@@ -303,7 +307,7 @@ function test_collection(::Type{T}, G::Oscar.GAPGroup) where T <: OscarInteger
       exps2 = SyllableVector{T}(pcgs, g2)
       exps = SyllableVector{T}(pcgs, prod)
 
-      v = freely_reduced_SyllableVector(vcat(exps1, exps2))
+      v = freely_reduced(vcat(exps1, exps2))
       nf = normalform(coll, v)
       if exps != nf
         println("$g1 * $g2 = $prod NOT $nf")
