@@ -5,7 +5,8 @@
 
 import Base: inv # needed for `SyllableVector`
 
-export Collector,
+export abelianized,
+       Collector,
        collector_from_pc_presentation,
        findfirst_uncollected_leftmost,
        freely_reduced,
@@ -59,6 +60,7 @@ function SyllableVector{T}(exponents::Vector{T}) where T <: OscarInteger
     return syllables
 end
 
+# `syllables` must be in normal form
 function Vector{T}(syllables::SyllableVector{T}, n::Int) where T <: OscarInteger
     v = zeros(T, n)
     for (i, e) in syllables
@@ -74,6 +76,44 @@ function SyllableVector{T}(pcgs::GAP.GapObj, pcelm::GAP.GapObj) where T <: Oscar
     return SyllableVector{T}(exps)
 end
 
+# for convenience: compute the syllable vector of an `FPGroupElem`
+function SyllableVector{T}(fpelm::FPGroupElem) where T <: OscarInteger
+    v = Vector{Int}(GAP.Globals.ExtRepOfObj(fpelm.X))
+    syllables = Syllable{T}[]
+    for i in 1:2:(length(v)-1)
+      push!(syllables, (v[i], v[i+1]))
+    end
+    return syllables
+end
+
+"""
+    abelianized(x::SyllableVector{T}) where T <: OscarInteger
+
+Return the normalized `SyllableVector{T}` obtained from abelianizing `x`,
+that is, regarding the underlying generators as commuting.
+"""
+function abelianized(x::SyllableVector{T}) where T <: OscarInteger
+    length(x) > 0 || return x
+    x = sort(x)
+    syllables = Syllable{T}[]
+    curr_gen = x[1][1]
+    curr_exp = T(0)
+    for (i, e) in x
+      if i == curr_gen
+        curr_exp = curr_exp + e
+      else
+        if curr_exp != 0
+          push!(syllables, (curr_gen, curr_exp))
+        end
+        curr_gen = i
+        curr_exp = e
+      end
+    end
+    if curr_exp != 0
+      push!(syllables, (curr_gen, curr_exp))
+    end
+    return syllables
+end
 
 ############################################################################
 #
