@@ -2,7 +2,6 @@
 #Exercise 1
 ##############################
 
-#Function printing hello world
 function hello_world()
     println("hello world")
 end
