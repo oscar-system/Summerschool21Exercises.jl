@@ -1,0 +1,37 @@
+1. Vandermonde matrices
+	1.
+		$ R, v = PolynomialRing(QQ, ["x1","x2","x3","x4","x5"])
+
+		###Creation of the polynomial ring###
+
+	2. 
+		$ M = [v[i]^j for i = 1:5, j=0:4]
+
+		###Creation of the matrix###
+
+		$ V = matrix(R,M)
+		
+		###Converting it into Oscar-fashion matrix, by storing the base ring R###
+
+	3. 
+		$ D = det(V)
+
+		###Computing the determinant###
+
+		$ factor(D)
+
+		###Factorising this determinant###
+
+	4. 	$ P = [[rand(QQ, -100:100) for j in 1:5] for i=1:10]
+
+		###Creating 10 random vectors of 5 rational numbers###
+
+		$ for p in P
+			ev(L::fmpq_mpoly) = evaluate(L,p) #for all p, I create an 'evaluation map at p')
+			println(evaluate(D,p) == det(map_entries(ev,V)))
+		  end
+
+		###At each step, I am checking if the determinant D of V applied to p
+		(being a random 5-vectors of rationals) is equal to the determinant of
+		V applied component-wise to p (why the use of the map_entries method)
+	
