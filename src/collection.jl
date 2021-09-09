@@ -51,13 +51,7 @@ const SyllableVector{T} = Vector{Syllable{T}}
 # `exponents` must contain the exponent of the `i`-th generator
 # at position `i`
 function SyllableVector{T}(exponents::Vector{T}) where T <: OscarInteger
-    syllables = Syllable{T}[]
-    for i in 1:length(exponents)
-      if exponents[i] != 0
-        push!(syllables, (i, exponents[i]))
-      end
-    end
-    return syllables
+    return Syllable{T}[(i, exponents[i]) for i in 1:length(exponents) if exponents[i] != 0]
 end
 
 # `syllables` must be in normal form
@@ -79,40 +73,18 @@ end
 # for convenience: compute the syllable vector of an `FPGroupElem`
 function SyllableVector{T}(fpelm::FPGroupElem) where T <: OscarInteger
     v = Vector{Int}(GAP.Globals.ExtRepOfObj(fpelm.X))
-    syllables = Syllable{T}[]
-    for i in 1:2:(length(v)-1)
-      push!(syllables, (v[i], v[i+1]))
-    end
-    return syllables
+    return Syllable{T}[(v[i], v[i+1]) for i in 1:2:(length(v)-1)]
 end
 
 """
-    abelianized(x::SyllableVector{T}) where T <: OscarInteger
+    abelianized(v::SyllableVector{T}) where T <: OscarInteger
 
-Return the normalized `SyllableVector{T}` obtained from abelianizing `x`,
+Return the normalized `SyllableVector{T}` obtained from abelianizing `v`,
 that is, regarding the underlying generators as commuting.
 """
-function abelianized(x::SyllableVector{T}) where T <: OscarInteger
-    length(x) > 0 || return x
-    x = sort(x)
-    syllables = Syllable{T}[]
-    curr_gen = x[1][1]
-    curr_exp = T(0)
-    for (i, e) in x
-      if i == curr_gen
-        curr_exp = curr_exp + e
-      else
-        if curr_exp != 0
-          push!(syllables, (curr_gen, curr_exp))
-        end
-        curr_gen = i
-        curr_exp = e
-      end
-    end
-    if curr_exp != 0
-      push!(syllables, (curr_gen, curr_exp))
-    end
-    return syllables
+function abelianized(v::SyllableVector{T}) where T <: OscarInteger
+    length(v) > 0 || return v
+    return freely_reduced(sort(v))
 end
 
 ############################################################################
@@ -150,11 +122,7 @@ end
 Return a `SyllableVector{T}` that encodes the inverse of `v`.
 """
 function inv(v::SyllableVector{T}) where T <: OscarInteger
-    w = Syllable{T}[]
-    for i in length(v):-1:1
-      push!(w, (v[i][1], -v[i][2]))
-    end
-    return w
+    return Syllable{T}[(v[i][1], -v[i][2]) for i in length(v):-1:1]
 end
 
 
