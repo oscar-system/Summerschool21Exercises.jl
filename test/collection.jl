@@ -1,6 +1,7 @@
-@testset "entered by hand: D8" begin
-  id = SyllableVector{Int}()
-  rules = Base.Matrix{SyllableVector{Int}}(undef, 3, 3)
+@testset "entered by hand: dihedral group of order 8" begin
+  T = Int
+  id = SyllableVector{T}()
+  rules = Base.Matrix{SyllableVector{T}}(undef, 3, 3)
 
   powers = [2, 2, 2]
 
@@ -15,12 +16,48 @@
   rules[3,1] = [(2, 1), (3, 1)]
   rules[3,2] = [(3, 1)]
   
-  coll = Collector{Int}(findfirst_uncollected_leftmost, powers, rules)
+  coll = Collector{T}(findfirst_uncollected_leftmost, powers, rules)
   
   @test normalform(coll, [(1, 2)]) == [(2, 1)]
   @test normalform(coll, [(1, 4)]) == id
   @test normalform(coll, [(1, 1), (2, 1), (1, 1)]) == id
   @test normalform(coll, [(3, 1), (1, 1)]) == [(1, 1), (2, 1), (3, 1)]
+end
+
+@testset "entered by hand: dihedral group of order 16" begin
+  # The presentation is shown on page 35 of Eamonn's talks:
+  # < x1, x2, x3, x4 | x1^2 = 1, x2^2 = x3 x4,
+  #                    x3^2 = x4, x4^2 = 1,
+  #                    x1^-1 x2 x1 = x2 x3, x1^-1 x3 x1 = x3 x4,
+  #                    x2^-1 x3 x2 = x3, x1^-1 x4 x1 = x4,
+  #                    x2^-1 x4 x2 = x4, x3^-1 x4 x3 = x4 >
+  T = Int8
+  id = SyllableVector{T}()
+  rules = Base.Matrix{SyllableVector{T}}(undef, 4, 4)
+
+  powers = [2, 2, 2, 2]
+
+  rules[1,1] = id
+  rules[2,2] = [(3, 1), (4, 1)]
+  rules[3,3] = [(4, 1)]
+  rules[4,4] = id
+
+  rules[1,2] = [(2, 1), (3, 1)]
+  rules[1,3] = [(3, 1), (4, 1)]
+  rules[1,4] = [(4, 1)]
+  rules[2,1] = [(2, 1), (3, 1)]
+  rules[2,3] = [(3, 1), (4, 1)]
+  rules[2,4] = [(4, 1)]
+  rules[3,1] = [(3, 1), (4, 1)]
+  rules[3,2] = [(3, 1)]
+  rules[3,4] = [(3, 1)]
+  rules[4,1] = [(4, 1)]
+  rules[4,2] = [(4, 1)]
+  rules[4,3] = [(4, 1)]
+
+  coll = Collector{T}(findfirst_uncollected_leftmost, powers, rules)
+
+  @test normalform(coll, Tuple{Int64, T}[(3, 1), (2, 1), (1, 1)]) == [(1, 1), (2, 1)]
 end
 
 @testset "entered by hand: infinite dihedral group" begin

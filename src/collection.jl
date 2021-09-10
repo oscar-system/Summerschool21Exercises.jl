@@ -231,7 +231,7 @@ function normalform(coll::Collector{T}, v::SyllableVector{T}; verbose::Bool = fa
         end
         if b > 1
           push!(w, (y, b-1))
-        else
+        elseif b < -1
           push!(w, (y, b+1))
         end
         append!(w, v[(i+2):end])
