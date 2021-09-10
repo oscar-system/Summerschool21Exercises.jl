@@ -99,18 +99,18 @@ such that adjacent syllables belong to different generators.
 """
 function freely_reduced(v::SyllableVector{T}) where T <: OscarInteger
     w = Syllable{T}[]
-    length(v) == 0 && return w
-    if v[1][2] != 0
-      push!(w, v[1])
-    end
-    for i in 2:length(v)
-      if w[end][1] == v[i][1]
-        w[end] = (w[end][1], w[end][2] + v[i][2])
-        if w[end][2] == 0
-          pop!(w)
+    for x in v
+      if x[2] != 0
+        if length(w) == 0
+          push!(w, x)
+        elseif w[end][1] == x[1]
+          w[end] = (w[end][1], w[end][2] + x[2])
+          if w[end][2] == 0
+            pop!(w)
+          end
+        else
+          push!(w, x)
         end
-      else
-        push!(w, v[i])
       end
     end
     return w
@@ -160,15 +160,25 @@ end
 
 
 """
-    normalform(coll::Collector{T}, v::SyllableVector{T}) where T <: OscarInteger
+    normalform(coll::Collector{T}, v::SyllableVector{T}; verbose::Bool = false) where T <: OscarInteger
 
 Return a `SyllableVector{T}` that is the normal form of `v`,
 w.r.t. collection given by the rules in `coll`.
+
+If `verbose` is set to `true` then one line is printed per collection step,
+showing the current word.
+If the terminal capabilities admit then the (first) syllable of the
+uncollected subword to be handled is highlighted in blue.
 """
-function normalform(coll::Collector{T}, v::SyllableVector{T}) where T <: OscarInteger
+function normalform(coll::Collector{T}, v::SyllableVector{T}; verbose::Bool = false) where T <: OscarInteger
     v = freely_reduced(v)
     i = coll.findfirst_uncollected(coll, v)
     while i > 0
+      if verbose
+        # Show the current word, try to highlight the `i-th syllable.
+        println("# ", v[1:(i-1)]...,
+                "\e[1m\e[38;2;0;0;255;249m", v[i], "\e[0m", v[(i+1):end]...)
+      end
       w = v[1:i-1]
       exp = v[i][2]
       ii = v[i][1]
