@@ -221,6 +221,8 @@ function normalform(coll::Collector{T}, v::SyllableVector{T}) where T <: OscarIn
         end
         if b > 1
           push!(w, (y, b-1))
+        else
+          push!(w, (y, b+1))
         end
         append!(w, v[(i+2):end])
       end
