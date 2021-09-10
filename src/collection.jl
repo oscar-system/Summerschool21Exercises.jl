@@ -127,18 +127,18 @@ such that adjacent syllables belong to different generators.
 """
 function freely_reduced(v::SyllableVector{T}) where T <: OscarInteger
     w = Syllable{T}[]
-    length(v) == 0 && return w
-    if v[1][2] != 0
-      push!(w, v[1])
-    end
-    for i in 2:length(v)
-      if w[end][1] == v[i][1]
-        w[end] = (w[end][1], w[end][2] + v[i][2])
-        if w[end][2] == 0
-          pop!(w)
+    for x in v
+      if x[2] != 0
+        if length(w) == 0
+          push!(w, x)
+        elseif w[end][1] == x[1]
+          w[end] = (w[end][1], w[end][2] + x[2])
+          if w[end][2] == 0
+            pop!(w)
+          end
+        else
+          push!(w, x)
         end
-      else
-        push!(w, v[i])
       end
     end
     return w

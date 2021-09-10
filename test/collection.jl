@@ -23,6 +23,49 @@
   @test normalform(coll, [(3, 1), (1, 1)]) == [(1, 1), (2, 1), (3, 1)]
 end
 
+@testset "entered by hand: infinite dihedral group" begin
+  T = fmpz
+  id = SyllableVector{T}()
+
+  # Let a = [-1 0; 0 1], b = [-1 -1; 0 1] (both of order 2);
+  # a and b generate the infinite dihedral group.
+  # Set x = a*b, it has infinite order.
+
+  # 1. Take the polycyclic sequence [a, x].
+  #    We have a^-1*x*a  = a*x*a^-1 = x^-1
+  rules1 = Base.Matrix{SyllableVector{T}}(undef, 2, 2)
+
+  powers1 = [2, 0]
+
+  rules1[1,1] = id
+
+  rules1[1,2] = [(2, -1)]
+  rules1[2,1] = [(2, -1)]
+
+  coll1 = Collector{Int}(findfirst_uncollected_leftmost, powers1, rules1)
+
+  @test normalform(coll1, [(1, 1), (2, 1), (1, 1)]) == [(2, -1)]
+  @test normalform(coll1, [(2, -1), (1, 1)]) == [(1, 1), (2, 1)]
+  @test normalform(coll1, [(2, -2), (1, 1)]) == [(1, 1), (2, 2)]
+
+  # 2. Take the polycyclic sequence [x, a].
+  #    We have x^-1*a*x  = x^-2*a and x*a*x^-1 = x^2*a
+  rules2 = Base.Matrix{SyllableVector{T}}(undef, 2, 2)
+
+  powers2 = [0, 2]
+
+  rules2[2,2] = id
+
+  rules2[1,2] = [(1, 2), (2, 1)]
+  rules2[2,1] = [(1, -2), (2, 1)]
+
+  coll2 = Collector{Int}(findfirst_uncollected_leftmost, powers2, rules2)
+
+  @test normalform(coll2, [(1, 1), (2, 1), (1, 1)]) == [(2, 1)]
+  @test normalform(coll2, [(1, 1), (2, 1), (1, -1)]) == [(1, 2), (2, 1)]
+  @test normalform(coll2, [(1, 2), (2, 1), (1, -2)]) == [(1, 4), (2, 1)]
+end
+
 @testset "SyllableVector{T}" begin
   v = [1, -2, 3, -4]
   sv = SyllableVector{Int}(v)
@@ -30,11 +73,12 @@ end
   @test Vector{Int}(sv, 4) == v
 
   G = small_group(12, 3)
+  id = one(G)
   pcgs = GAP.Globals.Pcgs(G.X)
   x = rand(G)
   y = gens(G)
   v = SyllableVector{Int}(pcgs, x.X)
-  @test x == prod([y[i]^e for (i, e) in v])
+  @test x == prod([y[i]^e for (i, e) in v]; init = id)
 
   GG = isomorphic_fp_group(G)[1]
   x = rand(GG)
